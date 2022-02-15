@@ -2,21 +2,24 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <UserSecretsId>af66c3e1-ddfc-4130-9207-6a6bdc33931e</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="GraphQL.Server.Transports.AspNetCore.SystemTextJson" Version="5.0.2" />
-    <PackageReference Include="GraphQL.Server.Ui.Graphiql" Version="5.0.2" />
+    <PackageReference Include="GraphQL.Server.Ui.Playground" Version="5.2.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.8">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.8" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\TeacherWorkout.Data\TeacherWorkout.Data.csproj" />
     <ProjectReference Include="..\TeacherWorkout.Domain\TeacherWorkout.Domain.csproj" />
+    <ProjectReference Include="..\TeacherWorkout.Identity.Api\TeacherWorkout.Identity.Api.csproj" />
   </ItemGroup>
 
 </Project>

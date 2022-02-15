@@ -57,7 +57,8 @@ If you would like to suggest new functionality, open an Issue and mark it as a _
 
 ### API endpoints
 
-- GraphiQL (available at `/ui/graphiql`)
+- GraphQL Playground (available at `/ui/playground`)
+- Swagger (available at `/swagger/index.html`)
 
 ## Repos and projects
 
@@ -80,8 +81,10 @@ TODO: decouple docker-compose in development from staging
 
 ### Run migrations
 ```
-dotnet ef database update --startup-project TeacherWorkout.Api/ --project TeacherWorkout.Data/
+dotnet ef database update --startup-project TeacherWorkout.Api/ --project TeacherWorkout.Data/ --context TeacherWorkoutContext
 ```
+
+Alternatively you can use the TeacherWorkout.Migrator project to apply migrations to all contexts at once.
 
 ### Start App
 ```
@@ -92,7 +95,12 @@ dotnet run -p TeacherWorkout.Api
 
 ### Add a migration
 ```
-dotnet ef migrations add <MigrationNameGoesHere> --startup-project TeacherWorkout.Api/ --project TeacherWorkout.Data/
+dotnet ef migrations add <MigrationNameGoesHere> --startup-project TeacherWorkout.Api/ --project TeacherWorkout.Data/ --context TeacherWorkoutContext
+```
+
+### Add a migration for a different context
+```
+dotnet ef migrations add <MigrationNameGoesHere> --context UserContext --project .\TeacherWorkout.Identity --startup-project .\TeacherWorkout.Api 
 ```
 
 ### Run tests
@@ -101,9 +109,10 @@ ASPNETCORE_ENVIRONMENT=Test dotnet test
 ```
 
 ### Apply migrations and seed data to your dev DB
-Migrations will be applyed using the Migrator in all environments when running the application with docker.
 
-If dummy data is needed for development purposes just set the *SEEDDATA* to true in the .env file when runngin locally using docker. This will populate the DB with some dummy data on the first run. Subsequent runs will not re-seed if the data is already present.
+Migrations will be applied using the Migrator in all environments when running the application with docker.
+
+If dummy data is needed for development purposes just set the *SEEDDATA* to true in the .env file when running locally using docker. This will populate the DB with some dummy data on the first run. Subsequent runs will not re-seed if the data is already present.
 ```
 SEEDDATA=true
 ```
@@ -111,6 +120,11 @@ Alternatively, you can run the following commands to only run the Migrator in yo
 ```
 cd TeacherWorkout.Migrator
 dotnet run SeedData=false
+```
+
+To add a default admin account run the Migrator with the *SEEDUSERS* setting set to true.
+```
+SEEDUSERS=true
 ```
 
 ## Deployment

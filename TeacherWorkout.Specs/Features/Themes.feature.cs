@@ -121,14 +121,14 @@ this.ScenarioInitialize(scenarioInfo);
             this.ScenarioCleanup();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Anonymous user can list themes")]
+        [Xunit.SkippableFactAttribute(DisplayName="Authenticated user can list themes")]
         [Xunit.TraitAttribute("FeatureTitle", "Themes")]
-        [Xunit.TraitAttribute("Description", "Anonymous user can list themes")]
-        public virtual void AnonymousUserCanListThemes()
+        [Xunit.TraitAttribute("Description", "Authenticated user can list themes")]
+        public virtual void AuthenticatedUserCanListThemes()
         {
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Anonymous user can list themes", null, tagsOfScenario, argumentsOfScenario, this._featureTags);
+            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Authenticated user can list themes", null, tagsOfScenario, argumentsOfScenario, this._featureTags);
 #line 10
 this.ScenarioInitialize(scenarioInfo);
 #line hidden
@@ -153,7 +153,7 @@ this.ScenarioInitialize(scenarioInfo);
  testRunner.Given("Ion is an admin", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
 #line hidden
 #line 12
- testRunner.And("Vasile is an anonymous user", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+ testRunner.And("Vasile is an authenticated user", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line hidden
 #line 13
  testRunner.And("Ion creates a theme", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");

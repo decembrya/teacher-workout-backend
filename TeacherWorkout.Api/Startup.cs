@@ -1,16 +1,23 @@
 using System;
 using System.Linq;
+using System.Reflection;
 using GraphQL.Server;
 using GraphQL.Types;
+using GraphQL.Validation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Swashbuckle.AspNetCore.SwaggerUI;
+using TeacherWorkout.Api.Extensions;
 using TeacherWorkout.Api.GraphQL;
+using TeacherWorkout.Api.GraphQL.ValidationRules;
 using TeacherWorkout.Data;
 using TeacherWorkout.Domain.Common;
+using TeacherWorkout.Identity.Api;
+using TeacherWorkout.Identity.Api.Controllers;
 
 namespace TeacherWorkout.Api
 {
@@ -40,6 +47,7 @@ namespace TeacherWorkout.Api
             services.AddScoped<ISchema, TeacherWorkoutSchema>();
             AddOperations(services);
             AddRepositories(services, "TeacherWorkout.Data");
+            AddValidationRules(services);
 
             services.AddHttpContextAccessor();
             services.AddGraphQL(options =>
@@ -48,11 +56,26 @@ namespace TeacherWorkout.Api
                 })
                 .AddErrorInfoProvider(opt => opt.ExposeExceptionStackTrace = true)
                 .AddSystemTextJson()
-                .AddGraphTypes();
+                .AddGraphTypes()
+                .AddUserContextBuilder(httpContext => new GraphQlUserContext(httpContext.User));
+            
+            services.AddControllers();
+
+            var applicationAssemblies = GetAssemblies();
+            services.AddSwaggerFor(applicationAssemblies, Configuration);
 
             services.AddDbContext<TeacherWorkoutContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("TeacherWorkoutContext")));
+
+            services.AddIdentityApiServices(Configuration);
         }
+
+        private static void AddValidationRules(IServiceCollection services)
+        {
+            services.AddScoped<IValidationRule, RequiresAuthValidationRule>();
+        }
+
+        private Assembly[] GetAssemblies() => new[] { typeof(AuthController).GetTypeInfo().Assembly };
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, TeacherWorkoutContext db)
@@ -69,9 +92,29 @@ namespace TeacherWorkout.Api
             }
 
             app.UseRouting();
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseGraphQL<ISchema>();
-            app.UseGraphQLGraphiQL();
+            app.UseGraphQLPlayground();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+                endpoints.MapGraphQLPlayground();
+            });
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.ConfigObject = new ConfigObject
+                {
+                    Urls = new[]
+                    {
+                        new UrlDescriptor{Name = "api", Url = "/swagger/v1/swagger.json"}
+                    }
+                };
+            });
         }
 
         private static void AddOperations(IServiceCollection services)

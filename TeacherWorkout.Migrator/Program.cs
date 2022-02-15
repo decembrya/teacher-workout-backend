@@ -1,11 +1,13 @@
 ﻿using System;
-using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TeacherWorkout.Common.Extensions;
 using TeacherWorkout.Data;
+using TeacherWorkout.Identity;
 
 namespace TeacherWorkout.Migrator
 {
@@ -32,20 +34,43 @@ namespace TeacherWorkout.Migrator
             Console.WriteLine("Registering contexts.");
             services.AddDbContext<TeacherWorkoutContext>(options =>
                 options.UseNpgsql(configuration.GetConnectionString("TeacherWorkoutContext")));
+
+            services.AddDbContext<UserContext>(options =>
+                options.UseNpgsql(configuration.GetConnectionString("IdentityDbConnectionString")));
             Console.WriteLine("Done: Registering contexts.");
+
+            services
+                .AddDefaultIdentity<IdentityUser>()
+                .AddRoles<IdentityRole>()
+                .AddEntityFrameworkStores<UserContext>();
+            ConfigurePasswordOptions(services, configuration);
 
             Console.WriteLine("Getting contexts");
             var serviceProvider = services.BuildServiceProvider();
+
             var teacherWorkoutContext = serviceProvider.GetService<TeacherWorkoutContext>();
+            var userContext = serviceProvider.GetService<UserContext>();
+
             var dbContexts = new DbContext[]
             {
-                teacherWorkoutContext
+                teacherWorkoutContext,
+                userContext
             };
             Console.WriteLine("Done: Getting contexts");
 
             await ApplyMigrations(dbContexts);
 
+            var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
             await SeedData(configuration, teacherWorkoutContext);
+            await SeedUsers(configuration, teacherWorkoutContext, userManager);
+        }
+
+        private static void ConfigurePasswordOptions(ServiceCollection services, IConfigurationRoot configuration)
+        {
+            services.AddSingleton<IConfiguration>(configuration);
+            services.Configure<PasswordOptions>(configuration.GetSection(nameof(PasswordOptions)));
+            var passwordOptions = services.GetOptions<PasswordOptions>(nameof(PasswordOptions));
+            services.Configure<IdentityOptions>(options => { options.Password = passwordOptions; });
         }
 
         private static async Task ApplyMigrations(DbContext[] dbContexts)
@@ -64,7 +89,7 @@ namespace TeacherWorkout.Migrator
             Console.WriteLine("--------------------------------------------");
         }
 
-        private static async Task SeedData(IConfigurationRoot configuration, TeacherWorkoutContext? teacherWorkoutContext)
+        private static async Task SeedData(IConfigurationRoot configuration, TeacherWorkoutContext teacherWorkoutContext)
         {
             var seedDataEnabled = bool.Parse(configuration["SeedData"]);
             if (!seedDataEnabled)
@@ -76,6 +101,24 @@ namespace TeacherWorkout.Migrator
             await new TeacherWorkoutSeeder(teacherWorkoutContext).Seed();
 
             Console.WriteLine("Finished seeding database.");
+            Console.WriteLine("--------------------------------------------");
+        }
+
+        private static async Task SeedUsers(IConfigurationRoot configuration,
+            TeacherWorkoutContext teacherWorkoutContext, UserManager<IdentityUser> userManager)
+        {
+            var seedUsersEnabled = bool.Parse(configuration["SeedUsers"]);
+            if (!seedUsersEnabled)
+            {
+                return;
+            }
+
+            Console.WriteLine("Starting users seed.");
+            var adminEmail = configuration["Admin:EmailAddress"];
+            var adminPassword = configuration["Admin:Password"];
+            await new UserSeeder(teacherWorkoutContext, userManager).SeedDefaultAdmin(adminEmail, adminPassword);
+
+            Console.WriteLine("Finished seeding users.");
             Console.WriteLine("--------------------------------------------");
         }
     }
